@@ -15,7 +15,7 @@ export default function App() {
       <div 
         style={{
           position: 'fixed',
-          top: '120px',
+          top: '100px',
           right: '30px',
           backgroundColor: '#dc2626',
           color: 'white',
@@ -26,7 +26,7 @@ export default function App() {
           cursor: 'pointer',
           border: '2px solid #b91c1c',
           boxShadow: '0 4px 15px rgba(220, 38, 38, 0.5)',
-          zIndex: 99999,
+          zIndex: 100,
           fontFamily: 'Arial, sans-serif',
           display: 'flex',
           alignItems: 'center',
