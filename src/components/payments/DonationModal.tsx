@@ -148,17 +148,13 @@ export default function DonationModal({ isOpen, onClose, movieTitle }: DonationM
                     <input
                       type="number"
                       value={customAmount}
-                      onChange={(e) => setCustomAmount(Math.max(1, parseInt(e.target.value) || 0))}
-                      placeholder="Enter amount"
+                      onChange={(e) => setCustomAmount(parseInt(e.target.value) || 0)}
+                      placeholder="Enter any amount"
                       className="flex-1 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white text-2xl font-bold placeholder-gray-500 focus:outline-none focus:border-red-500 transition-colors"
-                      min="1"
-                      step="1"
+                                            step="1"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Minimum donation: $1. Thank you for your support!
-                  </p>
-                </div>
+                                  </div>
               </div>
 
               {/* Payment Methods */}
