@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -426,11 +426,12 @@ export default function ModernMovieDetailsModal({
                       <h3 className="text-xl font-bold text-white mb-3">Genres</h3>
                       <div className="flex flex-wrap gap-2">
                         {getGenreNames(movie.genre_ids).split(', ').map((genre) => (
-                          <Badge
-                            key={genre}
-                            text={genre}
-                            className="bg-white/10 text-white border border-white/20"
-                          />
+                          <div key={genre}>
+                            <Badge
+                              text={genre}
+                              className="bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Play, Info, Star, Calendar, Clock } from 'lucide-react';
 import Badge from '../common/Badge';

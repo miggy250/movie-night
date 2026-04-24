@@ -5,7 +5,7 @@ import ModernMovieCarousel from '../../components/movies/ModernMovieCarousel';
 import ModernMovieDetailsModal from '../../components/movies/ModernMovieDetailsModal';
 import ModernMovieCard from '../../components/movies/ModernMovieCard';
 import SearchResultsSection from '../../components/movies/SearchResultsSection';
-import OptimizedSearch, { SearchFilters } from '../../components/search/OptimizedSearch';
+import OptimizedSearch from '../../components/search/OptimizedSearch';
 import SophisticatedSidePanels from '../../components/layout/SophisticatedSidePanels';
 import BackToHomeNavbar from '../../components/layout/BackToHomeNavbar';
 import AllMovies from '../../components/movies/AllMovies';
@@ -39,13 +39,7 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
     setSearchQuery,
   } = useMovieBrowser();
 
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    type: 'all',
-    genre: 'all',
-    sortBy: 'relevance',
-    yearRange: 'all'
-  });
-  const [filteredResults, setFilteredResults] = useState<any[]>([]);
+    const [filteredResults, setFilteredResults] = useState<any[]>([]);
 
   const movieRowRef = useRef<HTMLDivElement>(null);
 
@@ -73,12 +67,6 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
     
     // Clear local state first
     setFilteredResults([]);
-    setSearchFilters({
-      type: 'all',
-      genre: 'all',
-      sortBy: 'relevance',
-      yearRange: 'all'
-    });
     
     // Then reset the browser state (which also clears searchQuery and searchResults)
     resetToBrowse();
@@ -96,41 +84,11 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
 
     let filtered = [...searchResults];
     
-    // Sort results
-    switch (searchFilters.sortBy) {
-      case 'newest':
-        filtered.sort((a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime());
-        break;
-      case 'oldest':
-        filtered.sort((a, b) => new Date(a.release_date).getTime() - new Date(b.release_date).getTime());
-        break;
-      case 'rating':
-        filtered.sort((a, b) => b.vote_average - a.vote_average);
-        break;
-      default: // relevance
-        // Keep original order
-        break;
-    }
-    
-    // Filter by year range
-    if (searchFilters.yearRange !== 'all') {
-      const yearRanges: Record<string, [number, number]> = {
-        '2020s': [2020, 2029],
-        '2010s': [2010, 2019],
-        '2000s': [2000, 2009],
-        '90s': [1990, 1999],
-        '80s': [1980, 1989]
-      };
-      
-      const [startYear, endYear] = yearRanges[searchFilters.yearRange];
-      filtered = filtered.filter(movie => {
-        const year = new Date(movie.release_date).getFullYear();
-        return year >= startYear && year <= endYear;
-      });
-    }
+    // Sort by popularity by default
+    filtered.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
     
     setFilteredResults(filtered);
-  }, [searchResults, searchFilters, searchQuery]);
+  }, [searchResults, searchQuery]);
 
   const handleRowScroll = (direction: 'left' | 'right') => {
     if (!movieRowRef.current) {
@@ -163,9 +121,6 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
             <h2 className="text-2xl font-bold text-white mb-2">Search Results</h2>
             <p className="text-gray-400">
               {filteredResults.length} results for "{searchQuery}"
-              {searchFilters.type !== 'all' && ` in ${searchFilters.type === 'movie' ? 'Movies' : 'TV Shows'}`}
-              {searchFilters.genre !== 'all' && ` • ${searchFilters.genre} genre`}
-              {searchFilters.yearRange !== 'all' && ` • ${searchFilters.yearRange}`}
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 pb-12">
@@ -235,15 +190,16 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
               
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 3xl:grid-cols-9 gap-1">
                 {movies.slice(5, 13).map((movie) => (
-                  <ModernMovieCard
-                    key={movie.id}
-                    movie={movie}
-                    layout="backdrop"
-                    size="medium"
-                    onSelect={(movie) => openMovieDetails(movie)}
-                    showPlayButton={true}
-                    className="mobile-optimized"
-                  />
+                  <div key={movie.id}>
+                    <ModernMovieCard
+                      movie={movie}
+                      layout="backdrop"
+                      size="medium"
+                      onSelect={(movie) => openMovieDetails(movie)}
+                      showPlayButton={true}
+                      className="mobile-optimized"
+                    />
+                  </div>
                 ))}
               </div>
             </section>
