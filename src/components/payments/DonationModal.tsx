@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Heart, CreditCard, Smartphone, Mail, Shield, Star } from 'lucide-react';
-import RealPaymentForm from './RealPaymentForm';
+import FlutterwavePayment from './FlutterwavePayment';
 
 interface DonationModalProps {
   isOpen: boolean;
@@ -13,15 +13,12 @@ interface DonationModalProps {
 const suggestedAmounts = [5, 10, 15, 25, 50, 100];
 
 const paymentMethods = [
-  { id: 'card', name: 'Mastercard', icon: CreditCard, description: 'Credit, Debit & Prepaid' },
-  { id: 'momopay', name: 'MomoPay', icon: Smartphone, description: 'Mobile money transfer' },
-  { id: 'paypal', name: 'PayPal', icon: Mail, description: 'Fast and secure' },
-  { id: 'crypto', name: 'Cryptocurrency', icon: Shield, description: 'Bitcoin, Ethereum' },
+  { id: 'flutterwave', name: 'Pay', icon: CreditCard, description: 'Cards, Mobile Money, Bank Transfer' },
 ];
 
 export default function DonationModal({ isOpen, onClose, movieTitle }: DonationModalProps) {
   const [customAmount, setCustomAmount] = useState<number>(15);
-  const [selectedPayment, setSelectedPayment] = useState<string>('card');
+  const [selectedPayment, setSelectedPayment] = useState<string>('flutterwave');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -208,57 +205,12 @@ export default function DonationModal({ isOpen, onClose, movieTitle }: DonationM
               </div>
 
               {/* Payment Form */}
-              {(selectedPayment === 'card' || selectedPayment === 'momopay') ? (
-                <div className="bg-gray-800 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">
-                    Payment Details - {selectedPaymentData?.name}
-                  </h3>
-                  <RealPaymentForm
-                    paymentMethod={selectedPayment as 'card' | 'momopay'}
-                    amount={customAmount}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                    onProcessing={handlePaymentProcessing}
-                  />
-                </div>
-              ) : (
-                <>
-                  {/* Action Buttons for other payment methods */}
-                  <div className="flex gap-4">
-                    <button
-                      onClick={onClose}
-                      className="flex-1 px-6 py-3 bg-gray-800 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleDonate}
-                      disabled={isProcessing}
-                      className="flex-1 px-6 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {isProcessing ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Heart className="w-4 h-4" />
-                          Continue with {selectedPaymentData?.name}
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Security Note */}
-                  <div className="mt-6 text-center">
-                    <p className="text-xs text-gray-500 flex items-center justify-center gap-2">
-                      <Shield className="w-3 h-3" />
-                      Secure payment processing • 256-bit encryption • PCI compliant
-                    </p>
-                  </div>
-                </>
-              )}
+              <FlutterwavePayment
+                amount={customAmount}
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+                onProcessing={handlePaymentProcessing}
+              />
             </div>
           </motion.div>
         </motion.div>

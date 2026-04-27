@@ -3,6 +3,7 @@ import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import AppRouter from './components/layout/AppRouter';
 import SEOHead from './components/seo/SEOHead';
 import DonationModal from './components/payments/DonationModal';
+import Footer from './components/layout/Footer';
 
 export default function App() {
   console.log('App component rendering!');
@@ -43,7 +44,7 @@ export default function App() {
           e.currentTarget.style.transform = 'scale(1)';
         }}
       >
-        ❤️ Donate Now
+        ❤️ Donate
       </div>
       
       {/* Donation Modal */}
@@ -53,7 +54,10 @@ export default function App() {
       />
       
       <UserPreferencesProvider>
-        <AppRouter />
+        <div className="min-h-screen flex flex-col">
+          <AppRouter />
+          <Footer />
+        </div>
       </UserPreferencesProvider>
     </>
   );

@@ -18,6 +18,7 @@ import {
   Maximize,
   Minimize
 } from 'lucide-react';
+import VideoLoadingBanner from '../ui/VideoLoadingBanner';
 import Badge from '../common/Badge';
 import { getImageUrl, getGenreNames, type MovieData } from '../../services/movieService';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
@@ -138,39 +139,29 @@ export default function ModernMovieDetailsModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-0 sm:p-4">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/95 backdrop-blur-sm"
-          onClick={onClose}
-        />
-
-        {/* Modal Container */}
+      <div className="fixed inset-0 z-[1000] flex flex-col">
+        {/* Full Page Container */}
         <motion.div
           layoutId={movie.title}
-          initial={{ opacity: 0, scale: 0.9, y: 50 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 50 }}
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className={`relative z-[1001] ${
-            isFullscreen 
-              ? 'w-full h-full' 
-              : 'w-full h-full sm:h-auto sm:max-w-6xl sm:max-h-[90vh] bg-black sm:rounded-2xl'
-          } overflow-hidden flex flex-col`}
+          className="relative w-full h-full bg-black overflow-y-auto"
         >
-          {/* Mobile Close Button */}
-          <button
-            onClick={onClose}
-            className="sm:hidden absolute top-4 right-4 z-[1002] w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
+          {/* Navigation Bar */}
+          <nav className="fixed top-0 left-0 right-0 z-[1002] bg-black/80 backdrop-blur-md px-4 py-3 flex items-center gap-4">
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-semibold truncate">{movie.title}</h1>
+          </nav>
 
           {/* Video Player Section */}
-          <div className="relative aspect-video w-full bg-black">
+          <div className="relative w-full bg-black pt-16" style={{ height: '70vh' }}>
             {isPlaying && playerUrl ? (
               <div 
                 className="relative w-full h-full"
@@ -178,28 +169,15 @@ export default function ModernMovieDetailsModal({
               >
                 <iframe
                   src={playerUrl}
-                  className="w-full h-full"
+                  className="w-full h-full object-contain"
                   allowFullScreen
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   title="Movie Player"
                   referrerPolicy="strict-origin-when-cross-origin"
                   loading="eager"
+                  style={{ border: 'none' }}
                 />
-                
-                {/* Close Button Overlay */}
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.6 }}
-                  whileHover={{ opacity: 1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={onClose}
-                  className="absolute top-2 right-2 z-[1003] w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center transition-all"
-                >
-                  <X className="w-4 h-4 text-white" />
-                </motion.button>
-
-                
-                              </div>
+              </div>
             ) : (
               <div className="relative w-full h-full">
                 {/* Background Image */}
@@ -223,6 +201,17 @@ export default function ModernMovieDetailsModal({
                       initial={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       className="absolute inset-0 bg-gray-900"
+                    />
+                  )}
+                </AnimatePresence>
+
+                {/* Video Loading Banner */}
+                <AnimatePresence>
+                  {isPlayerLoading && (
+                    <VideoLoadingBanner
+                      isLoading={isPlayerLoading}
+                      message="Loading video player..."
+                      showConnectionStatus={true}
                     />
                   )}
                 </AnimatePresence>

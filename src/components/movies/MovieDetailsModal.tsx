@@ -50,15 +50,16 @@ export default function MovieDetailsModal({
               <X className="w-6 h-6 text-white group-hover:rotate-90 transition-transform" />
             </button>
 
-            <div className="relative aspect-video w-full">
+            <div className="relative w-full bg-black" style={{ height: '100vh', maxHeight: '80vh' }}>
               {isPlaying && playerUrl ? (
                 <iframe
                   src={playerUrl}
-                  className="w-full h-full border-none shadow-inner"
+                  className="w-full h-full object-contain border-none shadow-inner"
                   allowFullScreen
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   title="Movie Player"
                   referrerPolicy="strict-origin-when-cross-origin"
+                  style={{ border: 'none' }}
                 />
               ) : (
                 <>

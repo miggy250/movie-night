@@ -53,6 +53,7 @@ export default function useMovieBrowser() {
 
   const playMovie = async (movie: MovieData) => {
     setPlayerError(null);
+    setIsPlayerLoading(true);
 
     // Generate URL instantly - no async needed for vidsrc
     const vidsrcUrl = getVidsrcUrl(movie.id);
@@ -61,8 +62,9 @@ export default function useMovieBrowser() {
     setPlayerUrl(vidsrcUrl);
     setIsPlaying(true);
     
-    // Optional: Add a minimal loading state for visual feedback
-    setTimeout(() => setIsPlayerLoading(false), 100);
+    // Show loading banner for a realistic duration to allow vidsrc to load
+    // This gives users feedback while the video player initializes
+    setTimeout(() => setIsPlayerLoading(false), 2000);
   };
 
   const openMovieDetails = (movie: MovieData, shouldAutoplay = false) => {

@@ -286,15 +286,16 @@ export default function SophisticatedSidePanels() {
                     className="relative w-full h-full max-w-6xl mx-auto"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                    <div className="relative w-full h-full" style={{ height: '100vh', maxHeight: '90vh' }}>
                       <iframe
                         src={playerUrl}
-                        className="absolute inset-0 w-full h-full"
+                        className="w-full h-full object-contain"
                         allowFullScreen
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         title="Movie Player"
                         referrerPolicy="strict-origin-when-cross-origin"
                         loading="eager"
+                        style={{ border: 'none' }}
                       />
                       
                       {/* Close Button */}

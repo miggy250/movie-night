@@ -34,5 +34,5 @@ export default function InlineDonateButton() {
       e.currentTarget.style.backgroundColor = '#dc2626';
       e.currentTarget.style.transform = 'scale(1)';
     }
-  }, '❤️ DONATE NOW');
+  }, '❤️ DONATE');
 }
