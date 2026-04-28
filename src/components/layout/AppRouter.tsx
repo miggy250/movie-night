@@ -3,8 +3,9 @@ import HomePage from '../../pages/home/HomePage';
 import FavoritesPage from '../../pages/favorites/FavoritesPage';
 import WatchLaterPage from '../../pages/watchlater/WatchLaterPage';
 import TVShowsPage from '../../pages/tvshows/TVShowsPage';
+import TrailersPage from '../../pages/trailers/TrailersPage';
 
-type PageType = 'home' | 'favorites' | 'watchlater' | 'tvshows' | 'movies' | 'new';
+type PageType = 'home' | 'favorites' | 'watchlater' | 'tvshows' | 'movies' | 'new' | 'trailers';
 
 export default function AppRouter() {
   const [currentPage, setCurrentPage] = useState<PageType>('home');
@@ -29,6 +30,9 @@ export default function AppRouter() {
       case '/new':
         setCurrentPage('new');
         break;
+      case '/trailers':
+        setCurrentPage('trailers');
+        break;
       default:
         setCurrentPage('home');
     }
@@ -44,6 +48,8 @@ export default function AppRouter() {
         return <WatchLaterPage />;
       case 'tvshows':
         return <TVShowsPage />;
+      case 'trailers':
+        return <TrailersPage navigateTo={navigateTo} />;
       case 'movies':
         return <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center">

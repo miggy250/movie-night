@@ -177,32 +177,13 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
               autoScroll={false}
             />
 
-            <section className="space-y-6 w-full">
-              <div className="space-y-4 px-4">
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white flex items-center gap-3">
-                  <span className="text-yellow-500">⭐</span>
-                  Popular on MovieNight
-                </h2>
-                <p className="text-gray-400 text-sm sm:text-base max-w-2xl">
-                  Discover what other movie lovers are watching right now
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 3xl:grid-cols-9 gap-1">
-                {movies.slice(5, 13).map((movie) => (
-                  <div key={movie.id}>
-                    <ModernMovieCard
-                      movie={movie}
-                      layout="backdrop"
-                      size="medium"
-                      onSelect={(movie) => openMovieDetails(movie)}
-                      showPlayButton={true}
-                      className="mobile-optimized"
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
+            <ModernMovieCarousel
+              movies={movies.slice(5, 13)}
+              title="Popular on MovieNight"
+              subtitle="Discover what other movie lovers are watching right now"
+              onMovieSelect={(movie) => openMovieDetails(movie)}
+              autoScroll={false}
+            />
 
             <ModernMovieCarousel
               movies={movies.slice(13, 25)}
@@ -216,7 +197,7 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
           
           {/* All Movies Section */}
           <div className="relative z-10">
-            <AllMovies />
+            <AllMovies onMovieSelect={openMovieDetails} />
           </div>
         </>
       )}
@@ -232,7 +213,7 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
         onPlay={() => selectedMovie && void playMovie(selectedMovie)}
       />
 
-      <SophisticatedSidePanels />
+      <SophisticatedSidePanels navigateTo={navigateTo} />
 
       {isSearching && (
         <div

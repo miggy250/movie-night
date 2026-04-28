@@ -9,24 +9,35 @@ import {
   Play,
   Star,
   Calendar,
-  Film
+  Film,
+  Clapperboard
 } from 'lucide-react';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
-import { getVidsrcUrl } from '../../services/movieService';
+import { getVideoUrl, type VideoSource } from '../../services/movieService';
 
-export default function SophisticatedSidePanels() {
+interface SophisticatedSidePanelsProps {
+  navigateTo?: (path: string) => void;
+}
+
+export default function SophisticatedSidePanels({ navigateTo }: SophisticatedSidePanelsProps = {}) {
   const [activePanel, setActivePanel] = useState<'favorites' | 'watchlater' | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playerUrl, setPlayerUrl] = useState('');
   const { favorites, watchLater } = useUserPreferences();
 
+  const handleNavigateToTrailers = () => {
+    if (navigateTo) {
+      navigateTo('/trailers');
+    }
+  };
+
   const currentItems = activePanel === 'favorites' ? favorites : watchLater;
   const currentItem = currentItems[currentIndex];
 
   const handlePlay = async (movie: any) => {
     try {
-      const url = await getVidsrcUrl(movie.id);
+      const url = getVideoUrl(movie.id, 'vidsrcpro');
       setPlayerUrl(url);
       setIsPlaying(true);
     } catch (error) {
@@ -90,6 +101,15 @@ export default function SophisticatedSidePanels() {
               {watchLater.length}
             </span>
           )}
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={handleNavigateToTrailers}
+          className="w-14 h-14 rounded-full shadow-lg bg-black/80 backdrop-blur-md text-white border border-white/20 hover:bg-purple-600/80 flex items-center justify-center transition-all"
+        >
+          <Clapperboard className="w-6 h-6" />
         </motion.button>
       </div>
 

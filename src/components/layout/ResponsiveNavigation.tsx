@@ -303,6 +303,17 @@ export default function ResponsiveNavigation({
                         )}
                       </button>
                       
+                      <button
+                        onClick={() => {
+                          if (navigateTo) navigateTo('/trailers');
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors"
+                      >
+                        <Play className="w-4 h-4 text-red-600" />
+                        <span className="text-white text-sm">Trailers</span>
+                      </button>
+                      
                       <button className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors">
                         <Settings className="w-4 h-4 text-gray-400" />
                         <span className="text-white text-sm">Settings</span>

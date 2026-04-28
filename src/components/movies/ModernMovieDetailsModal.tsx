@@ -20,7 +20,8 @@ import {
 } from 'lucide-react';
 import VideoLoadingBanner from '../ui/VideoLoadingBanner';
 import Badge from '../common/Badge';
-import { getImageUrl, getGenreNames, type MovieData } from '../../services/movieService';
+import { getImageUrl, getGenreNames, getVideoUrl, type MovieData, type VideoSource } from '../../services/movieService';
+import VideoSourceSelector from '../video/VideoSourceSelector';
 import { useUserPreferences } from '../../contexts/UserPreferencesContext';
 
 interface ModernMovieDetailsModalProps {
@@ -44,14 +45,17 @@ export default function ModernMovieDetailsModal({
   onClose,
   onPlay,
 }: ModernMovieDetailsModalProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'similar'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'details'>('overview');
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [videoSource, setVideoSource] = useState<VideoSource>('vidsrcpro');
   
   const { isFavorite, addToFavorites, isWatchLater, addToWatchLater } = useUserPreferences();
   
   const isLiked = movie ? isFavorite(movie.id) : false;
   const isInList = movie ? isWatchLater(movie.id) : false;
+
+  const currentVideoUrl = movie && isPlaying ? getVideoUrl(movie.id, videoSource) : null;
 
   useEffect(() => {
     if (movie) {
@@ -162,13 +166,14 @@ export default function ModernMovieDetailsModal({
 
           {/* Video Player Section */}
           <div className="relative w-full bg-black pt-16" style={{ height: '70vh' }}>
-            {isPlaying && playerUrl ? (
+            {isPlaying && currentVideoUrl ? (
               <div 
                 className="relative w-full h-full"
                 onDoubleClick={onClose}
               >
                 <iframe
-                  src={playerUrl}
+                  key={currentVideoUrl}
+                  src={currentVideoUrl || ''}
                   className="w-full h-full object-contain"
                   allowFullScreen
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -177,6 +182,14 @@ export default function ModernMovieDetailsModal({
                   loading="eager"
                   style={{ border: 'none' }}
                 />
+                
+                {/* Video Source Selector */}
+                <div className="absolute top-4 left-4 z-[1004]">
+                  <VideoSourceSelector
+                    currentSource={videoSource}
+                    onSourceChange={setVideoSource}
+                  />
+                </div>
               </div>
             ) : (
               <div className="relative w-full h-full">
@@ -334,8 +347,7 @@ export default function ModernMovieDetailsModal({
             <div className="flex border-b border-white/10">
               {[
                 { id: 'overview', label: 'Overview' },
-                { id: 'details', label: 'Details' },
-                { id: 'similar', label: `Similar (${relatedMovies.length})` }
+                { id: 'details', label: 'Details' }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -461,36 +473,6 @@ export default function ModernMovieDetailsModal({
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {activeTab === 'similar' && (
-                  <motion.div
-                    key="similar"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                  >
-                    <h3 className="text-xl font-bold text-white mb-4">Similar Movies</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {relatedMovies.map((relatedMovie) => (
-                        <motion.div
-                          key={relatedMovie.id}
-                          whileHover={{ scale: 1.05 }}
-                          className="aspect-video rounded-lg overflow-hidden cursor-pointer group"
-                        >
-                          <img
-                            src={getImageUrl(relatedMovie.backdrop_path)}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            alt={relatedMovie.title}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                          <div className="absolute bottom-2 left-2 right-2">
-                            <p className="text-white text-xs font-bold line-clamp-1">{relatedMovie.title}</p>
-                          </div>
-                        </motion.div>
-                      ))}
                     </div>
                   </motion.div>
                 )}

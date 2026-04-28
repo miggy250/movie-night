@@ -27,8 +27,34 @@ interface MovieVideoResult {
   type: string;
 }
 
+export interface TrailerData {
+  id: number;
+  title: string;
+  overview: string;
+  poster_path: string;
+  backdrop_path: string;
+  release_date: string;
+  vote_average: number;
+  videos: MovieVideoResult[];
+}
+
+export type VideoSource = 'embedsu' | 'vidsrcpro' | 'vidsrc';
+
+export const getVideoUrl = (id: number, source: VideoSource = 'vidsrcpro'): string => {
+  switch (source) {
+    case 'embedsu':
+      return `https://embed.su/embed/movie/${id}`;
+    case 'vidsrcpro':
+      return `https://vidsrc.net/embed/movie/${id}`;
+    case 'vidsrc':
+      return `https://vidsrc.to/embed/movie/${id}`;
+    default:
+      return `https://embed.su/embed/movie/${id}`;
+  }
+};
+
 export const getVidsrcUrl = (id: number): string => {
-  return `https://vidsrc.to/embed/movie/${id}`;
+  return getVideoUrl(id, 'vidsrcpro');
 };
 
 const getHeaders = () => ({
@@ -224,18 +250,13 @@ export const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') =>
   return `https://image.tmdb.org/t/p/${size}${path}`;
 };
 
-export const getMovieTrailerEmbedUrl = async (id: number): Promise<string | null> => {
+export const getTrailerUrl = async (movieId: number): Promise<string | null> => {
   try {
-    const res = await fetch(`${TMDB_BASE_URL}/movie/${id}/videos`, {
+    const res = await fetch(`${TMDB_BASE_URL}/movie/${movieId}/videos`, {
       headers: getHeaders()
     });
-
-    if (!res.ok) {
-      return null;
-    }
-
     const data = await res.json();
-    const videos = (data.results || []) as MovieVideoResult[];
+    const videos = data.results || [];
 
     const trailer = videos.find((video) =>
       video.site === 'YouTube' &&
@@ -257,6 +278,52 @@ export const getMovieTrailerEmbedUrl = async (id: number): Promise<string | null
   } catch (err) {
     console.error('TMDB Trailer Fetch Error:', err);
     return null;
+  }
+};
+
+export const getTrailers = async (): Promise<TrailerData[]> => {
+  try {
+    // Get trending movies
+    const res = await fetch(`${TMDB_BASE_URL}/trending/movie/day`, {
+      headers: getHeaders()
+    });
+    const data = await res.json();
+    const movies = data.results || [];
+
+    // Fetch videos for each movie
+    const trailersWithVideos = await Promise.all(
+      movies.slice(0, 20).map(async (movie: MovieData) => {
+        try {
+          const videoRes = await fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos`, {
+            headers: getHeaders()
+          });
+          const videoData = await videoRes.json();
+          const videos = videoData.results || [];
+
+          // Filter for YouTube trailers
+          const youtubeTrailers = videos.filter((v: MovieVideoResult) => 
+            v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
+          );
+
+          if (youtubeTrailers.length > 0) {
+            return {
+              ...movie,
+              videos: youtubeTrailers
+            } as TrailerData;
+          }
+          return null;
+        } catch (err) {
+          console.error(`Error fetching videos for movie ${movie.id}:`, err);
+          return null;
+        }
+      })
+    );
+
+    // Filter out nulls and return only movies with trailers
+    return trailersWithVideos.filter((t): t is TrailerData => t !== null);
+  } catch (err) {
+    console.error('TMDB Trailers Fetch Error:', err);
+    return [];
   }
 };
 
