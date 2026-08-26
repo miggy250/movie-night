@@ -22,7 +22,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold text-white">1. Information We Collect</h2>
             <p>
-              Movie Night is a free streaming discovery platform. We do not require you to create an
+              Movie Night is a discovery platform for movies, TV shows, trailers, and editorial watch guides. We do not require you to create an
               account or provide personal information to browse content. We may collect non-personal
               data such as your browser type, device information, and pages visited to improve our
               service.
@@ -43,6 +43,16 @@ export default function PrivacyPolicyPage() {
             <p>
               We use Google Analytics to understand how visitors interact with our site. Google
               Analytics uses cookies to collect anonymous usage data.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-3 text-lg font-semibold text-white">4. Advertising</h2>
+            <p>
+              We may use Google AdSense to display advertisements. Google and its partners may use
+              cookies or similar technologies to serve ads based on your visits to this site and
+              other sites on the internet. You can learn more about how Google uses data in its
+              advertising products in Google&apos;s privacy and advertising settings.
             </p>
           </section>
 

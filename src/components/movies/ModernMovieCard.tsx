@@ -22,6 +22,7 @@ interface ModernMovieCardProps {
   className?: string;
   previewDelayMs?: number;
   autoPreview?: boolean;
+  interactive?: boolean;
 }
 
 const sizeConfig = {
@@ -65,6 +66,7 @@ export default function ModernMovieCard({
   className = '',
   previewDelayMs = 800,
   autoPreview = true,
+  interactive = true,
 }: ModernMovieCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -163,10 +165,12 @@ export default function ModernMovieCard({
   };
 
   const handlePointerEnter = () => {
+    if (!interactive) return;
     schedulePreview();
   };
 
   const handlePointerLeave = (event: React.MouseEvent<HTMLElement>) => {
+    if (!interactive) return;
     if (isInsideCardOrPreview(event.relatedTarget)) {
       clearTimers();
       return;
@@ -195,12 +199,12 @@ export default function ModernMovieCard({
         ref={cardRef}
         type="button"
         className={`relative ${config[layout]} ${layout === 'poster' ? 'aspect-[2/3]' : 'aspect-video'} group text-left ${className}`}
-        whileHover={{ scale: layout === 'poster' ? 1.03 : 1.015, y: -3 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={interactive ? { scale: layout === 'poster' ? 1.03 : 1.015, y: -3 } : undefined}
+        whileTap={interactive ? { scale: 0.98 } : undefined}
         onMouseEnter={handlePointerEnter}
         onMouseLeave={handlePointerLeave}
-        onFocus={schedulePreview}
-        onBlur={scheduleHide}
+        onFocus={interactive ? schedulePreview : undefined}
+        onBlur={interactive ? scheduleHide : undefined}
         onClick={() => onSelect(movie)}
         aria-label={`Open ${contentType.toLowerCase()} ${title}`}
         layout
@@ -210,7 +214,7 @@ export default function ModernMovieCard({
             <img
               src={getImageUrl(imagePath)}
               alt={title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className={`h-full w-full object-cover transition-transform duration-500 ${interactive ? 'group-hover:scale-110' : ''}`}
               onError={() => setImageError(true)}
               loading="lazy"
               decoding="async"
@@ -281,7 +285,7 @@ export default function ModernMovieCard({
         </div>
       </motion.button>
 
-      {showPreview && previewRect
+      {interactive && showPreview && previewRect
         ? createPortal(
             <motion.div
               ref={previewRef}

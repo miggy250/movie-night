@@ -101,7 +101,7 @@ export default function App() {
           <div className="min-h-screen flex flex-col">
             {isHomePage && null}
             <AppRouter />
-            <Footer />
+            {isHomePage && <Footer />}
           </div>
         </ContinueWatchingProvider>
       </MediaLibraryProvider>
@@ -172,7 +172,7 @@ function getPageSeo(pathname: string) {
       return {
         title: 'Browse Movies Online | Movie Night',
         description: 'Browse the Movie Night movie collection and discover popular films, trending picks, and HD streaming options.',
-        keywords: 'browse movies online, popular movies, streaming movies, Movie Night movies'
+        keywords: 'movie discovery, popular movies, TV shows, trailers, Movie Night'
       };
     case '/new':
       return {
@@ -190,7 +190,7 @@ function getPageSeo(pathname: string) {
       return {
         title: 'Watch Movie Night Picks | Movie Night',
         description: 'Find hand-picked movies, TV shows, animations, new releases, and trailers to stream on Movie Night.',
-        keywords: 'watch movies online, movie night picks, TV shows online, animation streaming, movie trailers'
+        keywords: 'movie discovery, movie night picks, TV shows, animations, movie trailers'
       };
   }
 }

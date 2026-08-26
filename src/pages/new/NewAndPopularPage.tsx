@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
-import ModernMovieCard from '../../components/movies/ModernMovieCard';
+import NewReleasePreviewStack from '../../components/movies/NewReleasePreviewStack';
 import { LoadingSpinner } from '../../components/common/LoadingStates';
 import {
   getContentSlug,
@@ -74,37 +74,28 @@ export default function NewAndPopularPage() {
         </div>
       </header>
 
-      {trending.length > 0 && (
-        <section className="px-3 py-8 sm:px-6 lg:px-8">
-          <h2 className="mb-4 text-xl font-bold text-white">Trending Now</h2>
-          <div className="grid grid-cols-2 justify-items-center gap-3 sm:grid-cols-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {trending.map((movie) => (
-              <ModernMovieCard
-                key={movie.id}
-                movie={movie}
-                layout="poster"
-                size="medium"
-                onSelect={openMovie}
-              />
-            ))}
-          </div>
+      {newReleases.length > 0 && (
+        <section className="px-3 pb-16 sm:px-6 lg:px-8">
+          <NewReleasePreviewStack
+            movies={newReleases}
+            onMovieSelect={openMovie}
+            title="Newest first preview"
+            subtitle="Fresh arrivals stay at the front, the stack advances on its own, and you can step through pages manually."
+            pageSize={10}
+          />
         </section>
       )}
 
-      {newReleases.length > 0 && (
+      {trending.length > 0 && (
         <section className="px-3 pb-16 sm:px-6 lg:px-8">
-          <h2 className="mb-4 text-xl font-bold text-white">New Releases</h2>
-          <div className="grid grid-cols-2 justify-items-center gap-3 sm:grid-cols-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {newReleases.map((movie) => (
-              <ModernMovieCard
-                key={movie.id}
-                movie={movie}
-                layout="poster"
-                size="medium"
-                onSelect={openMovie}
-              />
-            ))}
-          </div>
+          <NewReleasePreviewStack
+            movies={trending}
+            onMovieSelect={openMovie}
+            title="Trending Now"
+            subtitle="The most popular movies right now, shown with the same stacked browser."
+            sortMovies={false}
+            pageSize={10}
+          />
         </section>
       )}
 

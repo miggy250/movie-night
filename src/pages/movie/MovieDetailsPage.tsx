@@ -8,7 +8,6 @@ import {
   Clock, 
   Film,
   Share2,
-  Download,
   ArrowLeft,
   Plus,
   ThumbsUp,

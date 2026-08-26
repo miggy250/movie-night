@@ -4,7 +4,6 @@ import {
   AlertCircle,
   Check,
   Clock,
-  Download,
   Heart,
   LoaderCircle,
   Play,
@@ -21,6 +20,7 @@ import VideoSourceSelector from '../video/VideoSourceSelector';
 import VideoLoadingBanner from '../ui/VideoLoadingBanner';
 import {
   getContentReleaseDate,
+  getContentStorageKey,
   getContentTitle,
   getContentTypeLabel,
   getContentYear,
@@ -67,6 +67,7 @@ export default function ModernMovieDetailsModal({
   playerError,
   playerUrl,
   currentSource,
+  relatedMovies,
   onClose,
   onPlay,
   onPlaySimilar,
@@ -82,7 +83,6 @@ export default function ModernMovieDetailsModal({
   const [isEditorialLoading, setIsEditorialLoading] = useState(false);
   const [similarItems, setSimilarItems] = useState<MovieData[]>([]);
   const [isSimilarLoading, setIsSimilarLoading] = useState(false);
-  const [downloadMessage, setDownloadMessage] = useState<string | null>(null);
 
   const { hasLikedItem, toggleLikedItem, hasQueuedItem, toggleQueuedItem } = useMediaLibrary();
   const { getEntry, markAsWatched, removeEntry, markEpisodeWatched } = useContinueWatching();
@@ -129,15 +129,22 @@ export default function ModernMovieDetailsModal({
     () => new Set(watchedEpisodes.map((entry) => `${entry.season}:${entry.episode}`)),
     [watchedEpisodes]
   );
-  const watchedCount = watchedEpisodes.length;
-  const downloadTargetUrl = movie
-    ? (
-        isSeries
-          ? getVidsrcUrl(movie, effectiveSeason, effectiveEpisode, 'sflix')
-          : getVidsrcUrl(movie, 1, 1, 'sflix')
-      )
-    : null;
+  const recommendationItems = useMemo(() => {
+    const items = similarItems.length > 0 ? similarItems : relatedMovies;
+    const selectedKey = movie ? getContentStorageKey(movie) : '';
+    const seen = new Set<string>();
 
+    return items.filter((item) => {
+      const itemKey = getContentStorageKey(item);
+      if (itemKey === selectedKey || seen.has(itemKey)) {
+        return false;
+      }
+
+      seen.add(itemKey);
+      return true;
+    }).slice(0, 12);
+  }, [movie, relatedMovies, similarItems]);
+  const watchedCount = watchedEpisodes.length;
   useEffect(() => {
     if (!movie) return;
 
@@ -186,7 +193,6 @@ export default function ModernMovieDetailsModal({
     setIsEpisodeLoading(false);
     setIsEditorialLoading(true);
     setIsSimilarLoading(true);
-    setDownloadMessage(null);
 
     let cancelled = false;
 
@@ -333,52 +339,6 @@ export default function ModernMovieDetailsModal({
         text: movie.overview,
         url: window.location.href,
       });
-    }
-  };
-
-  const buildDownloadName = () => {
-    const safeTitle = title.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '').replace(/\s+/g, ' ').trim() || 'Movie';
-    const signature = 'MovieNight';
-
-    if (isSeries) {
-      return `${signature} - ${safeTitle} - S${String(effectiveSeason).padStart(2, '0')}E${String(effectiveEpisode).padStart(2, '0')}.mp4`;
-    }
-
-    return `${signature} - ${safeTitle}.mp4`;
-  };
-
-  const triggerBrowserDownload = (url: string, fileName: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    link.target = '_blank';
-    link.rel = 'noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  };
-
-  const handleDownload = async () => {
-    if (!downloadTargetUrl) return;
-
-    setDownloadMessage('Preparing your download...');
-    const fileName = buildDownloadName();
-
-    try {
-      const response = await fetch(downloadTargetUrl);
-      if (!response.ok) {
-        throw new Error(`Download request failed with ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      triggerBrowserDownload(blobUrl, fileName);
-      window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-      setDownloadMessage(`Download started as ${fileName}.`);
-    } catch (error) {
-      console.error('Direct download fallback triggered:', error);
-      triggerBrowserDownload(downloadTargetUrl, fileName);
-      setDownloadMessage('The source did not expose a direct file, so we opened the active stream source instead.');
     }
   };
 
@@ -632,18 +592,8 @@ export default function ModernMovieDetailsModal({
                         Share
                       </span>
                     </button>
-                    <button
-                      onClick={() => void handleDownload()}
-                      className="min-h-11 rounded-xl border border-white/20 bg-white/10 px-3 py-3 text-sm text-white transition-colors hover:bg-white/20 sm:px-4 sm:text-base"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <Download className="h-4 w-4" />
-                        Download
-                      </span>
-                    </button>
                     </div>
                   </div>
-                  {downloadMessage && <p className="mt-3 text-sm text-gray-300">{downloadMessage}</p>}
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -954,45 +904,51 @@ export default function ModernMovieDetailsModal({
                   )}
                 </div>
 
-                {(isSimilarLoading || similarItems.length > 0) ? (
+                {(isSimilarLoading || recommendationItems.length > 0) ? (
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="mb-4">
                       <h3 className="text-xl font-bold text-white">{isSeries ? 'Similar TV Shows' : 'Similar Movies'}</h3>
                       <p className="mt-1 text-sm text-gray-400">
-                        {isSimilarLoading ? 'Loading similar titles from the recommendation feed...' : 'Editorial picks from the similar-title feed, with short context for discovery.'}
+                        {isSimilarLoading ? 'Loading similar titles from the recommendation feed...' : 'Corresponding picks matched by genre, format, and viewer interest.'}
                       </p>
                     </div>
                     {isSimilarLoading ? (
                       <div className="rounded-2xl border border-white/10 bg-black/35 p-4 text-sm text-gray-300">Similar titles are loading...</div>
                     ) : (
-                      <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-                        {similarItems.map((item) => (
-                          <div key={`${item.imdb_id || item.id}-${item.title}`} className="overflow-hidden rounded-2xl border border-white/10 bg-black/35">
-                            <img src={getImageUrl(item.poster_path)} alt={getContentTitle(item)} className="aspect-[2/3] w-full object-cover" loading="lazy" />
-                            <div className="p-3">
-                              <p className="line-clamp-2 text-sm font-semibold text-white">{getContentTitle(item)}</p>
-                              <p className="mt-1 text-xs text-gray-400">{getContentYear(item)} | {getGenreNames(item.genre_ids) || getContentTypeLabel(item)}</p>
-                              <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-gray-300">
-                                {getContentTitle(item)} is a useful next pick for viewers who want a related tone, genre, or story rhythm after {title}.
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (onPlaySimilar) {
-                                    onPlaySimilar(item, 1, 1);
-                                    return;
-                                  }
+                      <div className="space-y-3">
+                        {recommendationItems.map((item) => (
+                          <button
+                            key={`${item.imdb_id || item.id}-${getContentTitle(item)}`}
+                            type="button"
+                            onClick={() => {
+                              if (onPlaySimilar) {
+                                onPlaySimilar(item, 1, 1);
+                                return;
+                              }
 
-                                  window.open(getVidsrcUrl(item, 1, 1, currentSource), '_blank', 'noreferrer');
-                                }}
-                                className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-black transition-colors hover:bg-gray-200"
-                                aria-label={`Play ${getContentTitle(item)} now`}
-                              >
-                                <Play className="h-3.5 w-3.5 fill-black" />
+                              window.open(getVidsrcUrl(item, 1, 1, currentSource), '_blank', 'noreferrer');
+                            }}
+                            className="flex w-full gap-3 rounded-2xl border border-white/10 bg-black/35 p-3 text-left transition-colors hover:bg-white/10"
+                          >
+                            <img
+                              src={getImageUrl(item.poster_path || item.backdrop_path)}
+                              alt={getContentTitle(item)}
+                              className="h-28 w-[74px] shrink-0 rounded-lg object-cover sm:h-32 sm:w-[86px]"
+                              loading="lazy"
+                            />
+                            <span className="flex min-w-0 flex-1 flex-col py-0.5">
+                              <span className="line-clamp-2 text-sm font-semibold leading-5 text-white sm:text-base">{getContentTitle(item)}</span>
+                              <span className="mt-1 text-xs leading-5 text-gray-400">
+                                {getContentYear(item)} | {getGenreNames(item.genre_ids) || getContentTypeLabel(item)}
+                              </span>
+                              <span className="mt-2 line-clamp-2 text-xs leading-5 text-gray-300 sm:text-sm">
+                                {getContentTitle(item)} matches the mood, genre, or viewing pattern around {title}.
+                              </span>
+                              <span className="mt-auto pt-3 text-xs font-semibold text-red-200">
                                 Play Now
-                              </button>
-                            </div>
-                          </div>
+                              </span>
+                            </span>
+                          </button>
                         ))}
                       </div>
                     )}

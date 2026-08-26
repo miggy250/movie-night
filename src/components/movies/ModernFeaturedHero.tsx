@@ -87,6 +87,11 @@ export default function ModernFeaturedHero({
     : contentTypeLabel === 'Animation'
       ? 'Play Animation'
       : 'Play Now';
+  const runtimeLabel = isTvLikeContent(movie)
+    ? 'Series'
+    : movie.runtime
+      ? `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}min`
+      : 'N/A';
   const activeTrailerUrl = trailerUrl && isTrailerVisible ? trailerUrl : null;
   const trailerStatus = useMemo(() => {
     if (isTrailerLoading) return 'Loading trailer preview...';
@@ -130,7 +135,7 @@ export default function ModernFeaturedHero({
                   </div>
                   <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-gray-300">
                     <Clock className="h-4 w-4" />
-                    <span>{isTvLikeContent(movie) ? 'Series' : '2h 15min'}</span>
+                    <span>{runtimeLabel}</span>
                   </div>
                 </div>
               </div>

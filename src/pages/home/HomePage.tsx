@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Search } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ModernFeaturedHero from '../../components/movies/ModernFeaturedHero';
-import ModernMovieCarousel from '../../components/movies/ModernMovieCarousel';
+import NewReleasePreviewStack from '../../components/movies/NewReleasePreviewStack';
 import ModernMovieDetailsModal from '../../components/movies/ModernMovieDetailsModal';
 import ModernMovieCard from '../../components/movies/ModernMovieCard';
 import ContinueWatchingRail from '../../components/movies/ContinueWatchingRail';
@@ -24,7 +24,9 @@ import {
   getContentTypeLabel,
   getContentYear,
   getBrowseContentCatalog,
+  getImageUrl,
   getNewReleaseMovies,
+  getPopularMovies,
   getGenreNames,
   genreMap,
   isAnimationContent,
@@ -81,8 +83,8 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
   const [tvShows, setTVShows] = useState<ContentData[]>([]);
   const [animations, setAnimations] = useState<ContentData[]>([]);
   const [newReleases, setNewReleases] = useState<ContentData[]>([]);
+  const [popularMovies, setPopularMovies] = useState<ContentData[]>([]);
   const [activeTab, setActiveTab] = useState<'movies' | 'tv' | 'animations'>('movies');
-  const [guideSessionSeed] = useState(getGuideSessionSeed);
   const searchRequestRef = useRef(0);
   const hasActiveSearch = searchQuery.trim().length > 0;
   const showBackToHomeNavbar = hasActiveSearch || selectedGenre > 0;
@@ -150,12 +152,49 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
 
     return [...featuredRemovedContent]
       .sort((a, b) => new Date(getContentReleaseDate(b)).getTime() - new Date(getContentReleaseDate(a)).getTime())
-      .slice(0, 10);
+      .slice(0, 60);
   }, [currentFeaturedKey, featuredRemovedContent, newReleases]);
+  const movieTrending = useMemo(() => featuredRemovedContent, [featuredRemovedContent]);
+  const moviePopular = useMemo(() => {
+    const seen = new Set<string>();
+    const filtered = popularMovies.filter((item) => {
+      const itemKey = getContentStorageKey(item);
+      if (itemKey === currentFeaturedKey || seen.has(itemKey)) {
+        return false;
+      }
+
+      seen.add(itemKey);
+      return true;
+    });
+
+    return filtered.length ? filtered : featuredRemovedContent;
+  }, [currentFeaturedKey, featuredRemovedContent, popularMovies]);
+  const relatedMovies = useMemo(() => {
+    if (!selectedMovie) {
+      return [];
+    }
+
+    const selectedKey = getContentStorageKey(selectedMovie);
+    const selectedGenres = new Set(selectedMovie.genre_ids);
+
+    return allBrowseContent
+      .filter((item) => getContentStorageKey(item) !== selectedKey)
+      .map((item) => ({
+        item,
+        score:
+          item.genre_ids.reduce((score, genreId) => score + (selectedGenres.has(genreId) ? 10 : 0), 0) +
+          (getContentTypeLabel(item) === getContentTypeLabel(selectedMovie) ? 8 : 0) +
+          Math.min(item.vote_average || 0, 10) +
+          Math.min(Math.log1p(item.popularity || 0), 10),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .map(({ item }) => item)
+      .slice(0, 12);
+  }, [allBrowseContent, selectedMovie]);
   const editorialGuides = useMemo(() => {
     const usedKeys = new Set<string>();
     const select = (guide: GuideKind, candidates: ContentData[]) => {
-      const picks = selectGuidePicks(candidates, guide, guideSessionSeed, usedKeys);
+      const picks = selectGuidePicks(candidates, guide, usedKeys);
       picks.forEach((item) => usedKeys.add(getContentStorageKey(item)));
       return picks;
     };
@@ -165,7 +204,7 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
       familyNight: select('familyNight', allBrowseContent),
       weekend: select('weekend', movieNewReleases.length ? movieNewReleases : allBrowseContent)
     };
-  }, [allBrowseContent, guideSessionSeed, movieNewReleases]);
+  }, [allBrowseContent, movieNewReleases]);
   const visibleContinueWatchingEntries = useMemo(() => continueWatchingEntries.slice(0, 10), [continueWatchingEntries]);
 
   const syncTabWithItem = useCallback((item: ContentData) => {
@@ -242,14 +281,16 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
   // Fetch all content types on mount
   useEffect(() => {
     const fetchAllContent = async () => {
-      const [{ movies: moviesData, tvShows: tvData, animations: animationsData }, newReleaseData] = await Promise.all([
+      const [{ tvShows: tvData, animations: animationsData }, newReleaseData, popularData] = await Promise.all([
         getBrowseContentCatalog(),
-        getNewReleaseMovies()
+        getNewReleaseMovies(),
+        getPopularMovies()
       ]);
       
       setTVShows(tvData);
       setAnimations(animationsData);
       setNewReleases(newReleaseData);
+      setPopularMovies(popularData);
     };
 
     fetchAllContent();
@@ -566,71 +607,85 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
           <main className={`relative ${currentFeatured ? 'mt-6 sm:mt-10 lg:mt-12' : 'mt-5 sm:mt-8'} z-10 pb-16 sm:pb-24 space-y-8 sm:space-y-14 lg:space-y-20 w-full overflow-x-hidden`}>
             {activeTab === 'movies' && (
               <>
-                <ModernMovieCarousel
-                  movies={featuredRemovedContent}
-                  title="Trending Movies"
-                  subtitle="The most popular movies right now"
-                  onMovieSelect={(movie) => handleOpenMovieDetails(movie)}
-                  autoScroll={false}
-                  className="pt-4"
-                />
-
-                <ModernMovieCarousel
-                  movies={featuredRemovedContent.slice(4, 12)}
-                  title="Popular on MovieNight"
-                  subtitle="Popular on Movie Night"
-                  onMovieSelect={(movie) => handleOpenMovieDetails(movie)}
-                  autoScroll={false}
-                />
-
-                <ModernMovieCarousel
+                <NewReleasePreviewStack
                   movies={movieNewReleases}
+                  onMovieSelect={(movie) => handleOpenMovieDetails(movie)}
                   title="New Releases"
                   subtitle="Fresh movie drops and recent premieres"
+                  className="pt-2"
+                  pageSize={40}
+                  sortMovies={false}
+                  autoRotate={false}
+                />
+
+                <NewReleasePreviewStack
+                  movies={movieTrending}
                   onMovieSelect={(movie) => handleOpenMovieDetails(movie)}
-                  autoScroll={false}
+                  title="Trending Movies"
+                  subtitle="The most popular movies right now"
+                  sortMovies={false}
+                  pageSize={40}
+                  autoRotate={false}
+                />
+
+                <NewReleasePreviewStack
+                  movies={moviePopular}
+                  onMovieSelect={(movie) => handleOpenMovieDetails(movie)}
+                  title="Popular on MovieNight"
+                  subtitle="Popular on Movie Night"
+                  sortMovies={false}
+                  pageSize={40}
+                  autoRotate={false}
                 />
               </>
             )}
 
             {activeTab === 'tv' && (
               <>
-                <ModernMovieCarousel
+                <NewReleasePreviewStack
                   movies={featuredRemovedContent}
+                  onMovieSelect={(show) => handleOpenMovieDetails(show)}
                   title="Trending TV Shows"
                   subtitle="The most popular TV shows right now"
-                  onMovieSelect={(show) => handleOpenMovieDetails(show)}
-                  autoScroll={false}
-                  className="pt-4"
+                  sortMovies={false}
+                  pageSize={40}
+                  className="pt-2"
+                  autoRotate={false}
                 />
 
-                <ModernMovieCarousel
-                  movies={featuredRemovedContent.slice(4, 12)}
+                <NewReleasePreviewStack
+                  movies={featuredRemovedContent}
+                  onMovieSelect={(show) => handleOpenMovieDetails(show)}
                   title="Popular TV Shows"
                   subtitle="Discover what other viewers are watching"
-                  onMovieSelect={(show) => handleOpenMovieDetails(show)}
-                  autoScroll={false}
+                  sortMovies={false}
+                  pageSize={40}
+                  autoRotate={false}
                 />
               </>
             )}
 
             {activeTab === 'animations' && (
               <>
-                <ModernMovieCarousel
+                <NewReleasePreviewStack
                   movies={featuredRemovedContent}
+                  onMovieSelect={(animation) => handleOpenMovieDetails(animation)}
                   title="Trending Animations"
                   subtitle="The most popular animated content right now"
-                  onMovieSelect={(animation) => handleOpenMovieDetails(animation)}
-                  autoScroll={false}
-                  className="pt-4"
+                  sortMovies={false}
+                  pageSize={40}
+                  className="pt-2"
+                  autoRotate={false}
                 />
 
-                <ModernMovieCarousel
-                  movies={featuredRemovedContent.slice(4, 12)}
+                <NewReleasePreviewStack
+                  movies={featuredRemovedContent}
+                  onMovieSelect={(animation) => handleOpenMovieDetails(animation)}
                   title="Popular Animations"
                   subtitle="Discover amazing animated stories"
-                  onMovieSelect={(animation) => handleOpenMovieDetails(animation)}
-                  autoScroll={false}
+                  sortMovies={false}
+                  pageSize={40}
+                  autoRotate={false}
                 />
               </>
             )}
@@ -659,7 +714,7 @@ export default function HomePage({ navigateTo }: HomePageProps = {}) {
         isPlayerLoading={isPlayerLoading}
         playerError={playerError}
         playerUrl={playerUrl}
-        relatedMovies={movies.slice(0, 6)}
+        relatedMovies={relatedMovies}
         currentSource={currentSource}
         onClose={handleCloseMovieDetails}
         onPlay={(season, episode) => selectedMovie && void playMovie(selectedMovie, season, episode, currentSource)}
@@ -734,7 +789,7 @@ function IndexableMovieGuides({
         <div className="mb-7 max-w-4xl">
           <h2 className="text-2xl font-black text-white sm:text-3xl">Movie Night Guides and Recommendations</h2>
           <p className="mt-3 text-sm leading-7 text-gray-300 sm:text-base">
-            Movie Night helps you choose what to stream with useful movie descriptions, genre context, curated recommendations,
+            Movie Night helps you choose what to watch with useful movie descriptions, genre context, curated recommendations,
             and detail pages that include cast, director, rating, runtime, similar titles, and viewer notes when that information is available.
           </p>
         </div>
@@ -752,25 +807,32 @@ function IndexableMovieGuides({
               <p className="mt-3 text-sm leading-6 text-gray-300">{guide.description}</p>
 
               {guide.items.length > 0 ? (
-                <ul className="mt-5 space-y-3">
+                <div className="mt-5 space-y-3">
                   {guide.items.map((item) => (
-                    <li key={`${guide.title}-${getContentStorageKey(item)}`}>
-                      <button
-                        type="button"
-                        onClick={() => onMovieSelect(item)}
-                        className="block w-full rounded-xl border border-white/10 bg-black/30 p-3 text-left transition-colors hover:bg-white/10"
-                      >
-                        <span className="block text-sm font-semibold text-white">{getContentTitle(item)}</span>
+                    <button
+                      key={`${guide.title}-${getContentStorageKey(item)}`}
+                      type="button"
+                      onClick={() => onMovieSelect(item)}
+                      className="flex w-full gap-3 rounded-2xl border border-white/10 bg-black/35 p-3 text-left transition-colors hover:bg-white/10"
+                    >
+                      <img
+                        src={getImageUrl(item.poster_path || item.backdrop_path)}
+                        alt={getContentTitle(item)}
+                        className="h-24 w-16 shrink-0 rounded-lg object-cover"
+                        loading="lazy"
+                      />
+                      <span className="min-w-0 py-0.5">
+                        <span className="line-clamp-2 text-sm font-semibold leading-5 text-white">{getContentTitle(item)}</span>
                         <span className="mt-1 block text-xs leading-5 text-gray-400">
                           {getContentYear(item)} | {getGenreNames(item.genre_ids) || 'Movie Night pick'}
                         </span>
-                        <span className="mt-2 block text-xs leading-5 text-gray-300">
+                        <span className="mt-1 line-clamp-2 text-xs leading-5 text-gray-300">
                           {getGuideRecommendationReason(guide.slug, item)}
                         </span>
-                      </button>
-                    </li>
+                      </span>
+                    </button>
                   ))}
-                </ul>
+                </div>
               ) : (
                 <p className="mt-5 rounded-xl border border-white/10 bg-black/30 p-3 text-sm leading-6 text-gray-300">
                   {guide.fallback}
@@ -792,31 +854,6 @@ const GUIDE_GENRES: Record<GuideKind, number[]> = {
   weekend: [],
 };
 
-const getGuideSessionSeed = () => {
-  const storageKey = 'movienight-guide-session-seed';
-
-  try {
-    const existingSeed = sessionStorage.getItem(storageKey);
-    if (existingSeed) return existingSeed;
-
-    const newSeed = crypto.randomUUID();
-    sessionStorage.setItem(storageKey, newSeed);
-    return newSeed;
-  } catch {
-    return `${Date.now()}-${Math.random()}`;
-  }
-};
-
-const getStableGuideShuffleValue = (value: string) => {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-
-  return (hash >>> 0) / 4294967295;
-};
-
 const getReleaseRecencyScore = (item: ContentData) => {
   const releaseYear = Number(getContentYear(item));
   if (!Number.isFinite(releaseYear)) return 0;
@@ -825,7 +862,7 @@ const getReleaseRecencyScore = (item: ContentData) => {
   return Math.max(0, 18 - age * 2);
 };
 
-const getGuideScore = (item: ContentData, guide: GuideKind, sessionSeed: string) => {
+const getGuideScore = (item: ContentData, guide: GuideKind) => {
   const genreIds = GUIDE_GENRES[guide];
   const genreScore = genreIds.reduce((score, genreId, index) => (
     item.genre_ids.includes(genreId) ? score + 42 - index * 4 : score
@@ -833,15 +870,12 @@ const getGuideScore = (item: ContentData, guide: GuideKind, sessionSeed: string)
   const popularityScore = Math.min(Math.log1p(item.popularity || 0) * 7, 45);
   const ratingScore = Math.min(item.vote_average || 0, 10) * 3;
   const recencyScore = guide === 'weekend' ? getReleaseRecencyScore(item) : getReleaseRecencyScore(item) * 0.4;
-  const shuffleScore = getStableGuideShuffleValue(`${sessionSeed}:${guide}:${getContentStorageKey(item)}`) * 24;
-
-  return genreScore + popularityScore + ratingScore + recencyScore + shuffleScore;
+  return genreScore + popularityScore + ratingScore + recencyScore;
 };
 
 const selectGuidePicks = (
   candidates: ContentData[],
   guide: GuideKind,
-  sessionSeed: string,
   usedKeys: Set<string>,
 ) => {
   const preferredGenres = GUIDE_GENRES[guide];
@@ -851,7 +885,7 @@ const selectGuidePicks = (
       items.findIndex((candidate) => getContentStorageKey(candidate) === getContentStorageKey(item)) === index
     ))
     .filter((item) => guide === 'weekend' || item.genre_ids.some((genreId) => preferredGenres.includes(genreId)))
-    .sort((a, b) => getGuideScore(b, guide, sessionSeed) - getGuideScore(a, guide, sessionSeed));
+    .sort((a, b) => getGuideScore(b, guide) - getGuideScore(a, guide));
 
   const picks: ContentData[] = [];
   const typeCounts = new Map<string, number>();

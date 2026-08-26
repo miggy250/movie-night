@@ -21,6 +21,7 @@ export interface MovieData {
   genre_ids: number[];
   media_type?: 'movie' | 'tv' | 'animation';
   imdb_id?: string;
+  runtime?: number;
   /** Present for TV results (TMDB uses `name` instead of `title`). */
   name?: string;
   /** Present for TV results (TMDB uses `first_air_date` instead of `release_date`). */
@@ -329,6 +330,7 @@ const twoEmbedSimilarMovieCache = new Map<string, Promise<TwoEmbedSimilarRespons
 const twoEmbedSimilarTvCache = new Map<string, Promise<TwoEmbedSimilarResponse<TwoEmbedSearchTvResult> | null>>();
 const tmdbCreditsCache = new Map<string, Promise<TmdbCreditsResponse | null>>();
 const tmdbSimilarCache = new Map<string, Promise<TmdbContentListResponse<TmdbSimilarResult> | null>>();
+const movieDetailsCache = new Map<string, Promise<{ runtime?: number; imdbId?: string } | null>>();
 
 const getVideoSourceBaseUrl = (source: VideoSource) => {
   return VIDEO_SOURCE_OPTIONS.find((option) => option.id === source)?.baseUrl ?? VIDEO_SOURCE_OPTIONS[0].baseUrl;
@@ -1312,13 +1314,32 @@ const toYoutubeEmbedUrl = (videoKey: string) => {
   return `https://www.youtube-nocookie.com/embed/${videoKey}?autoplay=1&rel=0&modestbranding=1`;
 };
 
+const HOME_SECTION_PAGE_COUNT = 3;
+
+const fetchTmdbListPages = async <T,>(
+  buildUrl: (page: number) => string,
+  pageCount = HOME_SECTION_PAGE_COUNT,
+): Promise<T[]> => {
+  const responses = await Promise.all(
+    Array.from({ length: pageCount }, (_, index) => (
+      fetch(buildUrl(index + 1), {
+        headers: getHeaders()
+      })
+    ))
+  );
+
+  const payloads = await Promise.all(responses.map((response) => (
+    response.ok ? response.json() : Promise.resolve({ results: [] })
+  )));
+
+  return payloads.flatMap((payload) => payload.results || []);
+};
+
 export const getTrendingMovies = async (): Promise<MovieData[]> => {
   try {
-    const res = await fetch(`${TMDB_BASE_URL}/trending/movie/day`, {
-      headers: getHeaders()
-    });
-    const data = await res.json();
-    return data.results?.map((movie: any) => normalizeMovieResult(movie, 'movie')) || getFallbackMovies();
+    const results = await fetchTmdbListPages<any>((page) => `${TMDB_BASE_URL}/trending/movie/day?language=en-US&page=${page}`);
+    const movies = results.map((movie: any) => normalizeMovieResult(movie, 'movie')) as MovieData[];
+    return dedupeContent(movies).length ? dedupeContent(movies) as MovieData[] : getFallbackMovies();
   } catch (err) {
     console.error('TMDB Fetch Error:', err);
     return getFallbackMovies();
@@ -1336,7 +1357,6 @@ export const getNewReleaseMovies = async (): Promise<MovieData[]> => {
       include_adult: 'false',
       include_video: 'false',
       language: 'en-US',
-      page: '1',
       region: 'US',
       sort_by: 'primary_release_date.desc',
       'primary_release_date.lte': formatDate(today),
@@ -1344,13 +1364,37 @@ export const getNewReleaseMovies = async (): Promise<MovieData[]> => {
       'vote_count.gte': '25',
     });
 
-    const res = await fetch(`${TMDB_BASE_URL}/discover/movie?${query.toString()}`, {
-      headers: getHeaders()
+    const results = await fetchTmdbListPages<any>((page) => {
+      query.set('page', String(page));
+      return `${TMDB_BASE_URL}/discover/movie?${query.toString()}`;
     });
-    const data = await res.json();
-    return data.results?.map((movie: any) => normalizeMovieResult(movie, 'movie')) || [];
+
+    return dedupeContent(results.map((movie: any) => normalizeMovieResult(movie, 'movie'))) as MovieData[];
   } catch (err) {
     console.error('TMDB New Releases Fetch Error:', err);
+    return [];
+  }
+};
+
+export const getPopularMovies = async (): Promise<MovieData[]> => {
+  try {
+    const query = new URLSearchParams({
+      include_adult: 'false',
+      include_video: 'false',
+      language: 'en-US',
+      region: 'US',
+      sort_by: 'popularity.desc',
+      'vote_count.gte': '100',
+    });
+
+    const results = await fetchTmdbListPages<any>((page) => {
+      query.set('page', String(page));
+      return `${TMDB_BASE_URL}/discover/movie?${query.toString()}`;
+    });
+
+    return dedupeContent(results.map((movie: any) => normalizeMovieResult(movie, 'movie'))) as MovieData[];
+  } catch (err) {
+    console.error('TMDB Popular Movies Fetch Error:', err);
     return [];
   }
 };
@@ -1706,6 +1750,40 @@ export const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') =>
   if (!path) return "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070&auto=format&fit=crop";
   if (isAbsoluteUrl(path)) return path;
   return `https://image.tmdb.org/t/p/${size}${path}`;
+};
+
+export const fetchFeaturedMovieExtraDetails = async (
+  movie: Pick<MovieData, 'id' | 'media_type'>
+): Promise<{ runtime?: number; imdbId?: string } | null> => {
+  const cacheKey = `${movie.media_type || 'movie'}:${movie.id}`;
+  const cached = movieDetailsCache.get(cacheKey);
+  if (cached) return cached;
+
+  const isSeries = movie.media_type === 'tv' || movie.media_type === 'animation';
+  const mediaType = isSeries ? 'tv' : 'movie';
+
+  const promise = (async () => {
+    try {
+      const [detailsRes, externalIdsRes] = await Promise.all([
+        fetch(`${TMDB_BASE_URL}/${mediaType}/${movie.id}`, { headers: getHeaders() }),
+        fetch(`${TMDB_BASE_URL}/${mediaType}/${movie.id}/external_ids`, { headers: getHeaders() })
+      ]);
+
+      const details = detailsRes.ok ? await detailsRes.json() : null;
+      const externalIds = externalIdsRes.ok ? await externalIdsRes.json() : null;
+
+      return {
+        runtime: details?.runtime ?? undefined,
+        imdbId: externalIds?.imdb_id ?? undefined,
+      };
+    } catch (error) {
+      console.error('Error fetching featured movie extra details:', error);
+      return null;
+    }
+  })();
+
+  movieDetailsCache.set(cacheKey, promise);
+  return promise;
 };
 
 export const getTrailerUrl = async (

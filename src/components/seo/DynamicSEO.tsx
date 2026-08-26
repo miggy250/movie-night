@@ -15,9 +15,9 @@ export default function DynamicSEO({
   
   useEffect(() => {
     const updateSEO = () => {
-      let title = 'Movie Night - Watch Free Movies Online | Stream Latest Films';
-      let description = 'Watch the latest movies online for free! Movie Night offers unlimited streaming of popular films, blockbusters, and hidden gems.';
-      let keywords = 'watch movies online, free movie streaming, latest films, HD movies, online cinema, movie night';
+      let title = 'Movie Night - Discover Movies, Trailers, and Guides';
+      let description = 'Discover movies, TV shows, trailers, and editorial watch guides on Movie Night.';
+      let keywords = 'movie discovery, trailers, TV shows, watch guides, film recommendations, movie night';
       let url = 'https://movienight.giize.com';
       
       switch (currentPage) {
@@ -26,38 +26,38 @@ export default function DynamicSEO({
             ? `Search Results for "${searchQuery}" - Movie Night`
             : 'Search Movies - Movie Night';
           description = searchQuery
-            ? `Search results for "${searchQuery}" on Movie Night. Find the best movies matching your search.`
-            : 'Search thousands of movies on Movie Night. Find your next favorite film.';
-          keywords += `, movie search, find movies, ${searchQuery || 'search films'}`;
+            ? `Search results for "${searchQuery}" on Movie Night. Find movies and shows that match your search.`
+            : 'Search movies and shows on Movie Night. Find your next favorite title.';
+          keywords += `, movie search, find titles, ${searchQuery || 'search films'}`;
           url += `/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`;
           break;
           
         case 'favorites':
           title = 'My Favorite Movies - Movie Night';
-          description = 'Your personal collection of favorite movies on Movie Night. Re-watch your beloved films anytime.';
+          description = 'Your personal collection of favorite titles on Movie Night. Revisit picks you have saved.';
           keywords += ', favorite movies, personal collection, saved films';
           url += '/favorites';
           break;
           
         case 'watchlater':
           title = 'Watch Later List - Movie Night';
-          description = 'Movies you want to watch later on Movie Night. Build your watchlist and never miss great films.';
+          description = 'Titles you want to revisit later on Movie Night. Build your watchlist and never miss great picks.';
           keywords += ', watch later, movie queue, watchlist, to-watch';
           url += '/watchlater';
           break;
           
         case 'tvshows':
           title = 'TV Shows - Movie Night';
-          description = 'Browse popular TV shows and series on Movie Night. Stream the latest episodes and seasons.';
+          description = 'Browse popular TV shows and series on Movie Night. Explore the latest episodes and seasons.';
           keywords += ', tv shows, series, television shows, streaming series';
           url += '/tv-shows';
           break;
       }
       
       if (selectedMovie) {
-        title = `Watch ${selectedMovie.title} (2024) - Movie Night`;
-        description = `Watch ${selectedMovie.title} online for free! ${selectedMovie.overview?.substring(0, 160)}...`;
-        keywords += `, ${selectedMovie.title}, watch ${selectedMovie.title} online, ${selectedMovie.title} streaming`;
+        title = `${selectedMovie.title} - Movie Night`;
+        description = `${selectedMovie.title}. ${selectedMovie.overview?.substring(0, 160)}...`;
+        keywords += `, ${selectedMovie.title}, ${selectedMovie.title} details, ${selectedMovie.title} trailer`;
         url += `/movies/${getContentSlug(selectedMovie)}`;
       }
       

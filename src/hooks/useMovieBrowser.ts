@@ -9,6 +9,7 @@ import {
   getTrailerUrl,
   getVidsrcUrl,
   getVideoSourceName,
+  fetchFeaturedMovieExtraDetails,
   type ContentData,
   type MovieData,
   type VideoSource
@@ -70,7 +71,22 @@ export default function useMovieBrowser() {
         );
 
         const featuredWithTrailer = trailerChecks.find(({ trailerUrl }) => Boolean(trailerUrl))?.movie;
-        setFeatured(featuredWithTrailer ?? candidates[0] ?? trending[0]);
+        const featuredCandidate = featuredWithTrailer ?? candidates[0] ?? trending[0];
+
+        if (featuredCandidate) {
+          const extra = await fetchFeaturedMovieExtraDetails(featuredCandidate);
+          if (extra) {
+            setFeatured({
+              ...featuredCandidate,
+              runtime: extra.runtime,
+              imdb_id: extra.imdbId ?? featuredCandidate.imdb_id,
+            });
+          } else {
+            setFeatured(featuredCandidate);
+          }
+        } else {
+          setFeatured(null);
+        }
       }
     };
 

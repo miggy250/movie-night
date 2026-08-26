@@ -12,9 +12,9 @@ interface SEOHeadProps {
 }
 
 export default function SEOHead({
-  title = 'Movie Night - Watch Free Movies Online | Stream Latest Films',
-  description = 'Watch the latest movies online for free! Movie Night offers unlimited streaming of popular films, blockbusters, and hidden gems. Enjoy HD quality movies with no subscription required.',
-  keywords = 'watch movies online, free movie streaming, latest films, HD movies, online cinema, movie night, free films, watch movies free, stream movies, latest movies 2024, popular films, independent films',
+  title = 'Movie Night - Discover Movies, Trailers, and Guides',
+  description = 'Discover movies, TV shows, trailers, and editorial watch guides on Movie Night.',
+  keywords = 'movie discovery, trailers, TV shows, watch guides, film recommendations, movie night, curated picks, entertainment discovery',
   image = '/og-image.jpg',
   url = 'https://movienight.giize.com',
   type = 'website',
@@ -140,10 +140,8 @@ export default function SEOHead({
     };
 
     addLink('dns-prefetch', '//image.tmdb.org');
-    addLink('dns-prefetch', '//vidsrc.to');
     addLink('dns-prefetch', '//fonts.googleapis.com');
     addLink('preconnect', 'https://image.tmdb.org');
-    addLink('preconnect', 'https://vidsrc.to');
 
     return () => {
       removeMetaTag('movie-night-seo');
