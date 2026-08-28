@@ -305,20 +305,20 @@ export interface TrailerData {
 }
 
 export type VideoSource = 'vidlinkPro' | 'twoEmbed' | 'superembedStream' | 'autoembedCc' | 'godriveplayer' | 'vidsrcTo' | 'vsembedSu' | 'sflix';
-export const DEFAULT_VIDEO_SOURCE = (import.meta.env.VITE_DEFAULT_VIDEO_SOURCE || 'vidlinkPro') as VideoSource;
+export const DEFAULT_VIDEO_SOURCE = (import.meta.env.VITE_DEFAULT_VIDEO_SOURCE || 'twoEmbed') as VideoSource;
 export const VIDEO_SOURCE_OPTIONS: Array<{
   id: VideoSource;
   name: string;
   baseUrl: string;
 }> = [
-  { id: 'vidlinkPro', name: 'vidlink.pro', baseUrl: 'https://vidlink.pro' },
-  { id: 'twoEmbed', name: '2embed.cc', baseUrl: 'https://www.2embed.cc' },
-  { id: 'superembedStream', name: 'superembed.stream', baseUrl: 'https://multiembed.mov' },
-  { id: 'autoembedCc', name: 'autoembed.cc', baseUrl: 'https://autoembed.cc' },
-  { id: 'godriveplayer', name: 'godriveplayer.com', baseUrl: 'https://godriveplayer.com' },
-  { id: 'vsembedSu', name: 'vsembed.su', baseUrl: 'https://vidsrc-embed.su' },
-  { id: 'vidsrcTo', name: 'vidsrc.to', baseUrl: 'https://vidsrc.to' },
-  { id: 'sflix', name: 'sflix.to', baseUrl: 'https://sflix.to' },
+  { id: 'twoEmbed', name: 'Source 1', baseUrl: 'https://www.2embed.cc' },
+  { id: 'vidlinkPro', name: 'Source 2', baseUrl: 'https://vidlink.pro' },
+  { id: 'superembedStream', name: 'Source 3', baseUrl: 'https://multiembed.mov' },
+  { id: 'autoembedCc', name: 'Source 4', baseUrl: 'https://autoembed.cc' },
+  { id: 'godriveplayer', name: 'Source 5', baseUrl: 'https://godriveplayer.com' },
+  { id: 'vsembedSu', name: 'Source 6', baseUrl: 'https://vidsrc-embed.su' },
+  { id: 'vidsrcTo', name: 'Source 7', baseUrl: 'https://vidsrc.to' },
+  { id: 'sflix', name: 'Source 8', baseUrl: 'https://sflix.to' },
 ];
 const trailerUrlCache = new Map<string, Promise<string | null>>();
 const imdbIdCache = new Map<string, Promise<string | null>>();
