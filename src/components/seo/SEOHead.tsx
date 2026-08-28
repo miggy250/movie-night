@@ -9,6 +9,13 @@ interface SEOHeadProps {
   type?: string;
   movieTitle?: string;
   movieDescription?: string;
+  movieImage?: string;
+  isSeries?: boolean;
+  genres?: string[];
+  datePublished?: string;
+  contentRating?: string;
+  aggregateRating?: { ratingValue: number; bestRating: number; worstRating: number };
+  duration?: string;
 }
 
 export default function SEOHead({
@@ -19,7 +26,14 @@ export default function SEOHead({
   url = 'https://movienight.giize.com',
   type = 'website',
   movieTitle,
-  movieDescription
+  movieDescription,
+  movieImage,
+  isSeries = false,
+  genres,
+  datePublished,
+  contentRating,
+  aggregateRating,
+  duration
 }: SEOHeadProps) {
 
   useEffect(() => {
@@ -80,24 +94,45 @@ export default function SEOHead({
     canonical.setAttribute('href', url);
 
     const movieSlug = movieTitle
-      ? movieTitle.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+      ? movieTitle.toLowerCase().trim().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
       : '';
 
-    const pageType = movieTitle ? 'Movie' : 'WebSite';
+    const isContentPage = Boolean(movieTitle);
+    const pageType = isContentPage ? (isSeries ? 'TVSeries' : 'Movie') : 'WebSite';
+    const contentImage = movieImage || image;
+    const resolvedImage = (contentImage.startsWith('http') ? contentImage : `https://movienight.giize.com${contentImage}`);
+
     const baseStructured: Record<string, unknown> = {
       '@context': 'https://schema.org',
       '@type': pageType,
       name: movieTitle || 'Movie Night',
       description: movieDescription || description,
       url: movieTitle ? `${url}/movies/${movieSlug}` : url,
-      image: image.startsWith('http') ? image : `https://movienight.giize.com${image}`,
+      image: resolvedImage,
       inLanguage: 'en-US',
     };
 
-    if (movieTitle) {
-      baseStructured.genre = ['Action', 'Drama', 'Comedy', 'Thriller', 'Sci-Fi'];
-      baseStructured.datePublished = new Date().toISOString();
-      baseStructured.contentRating = 'PG-13';
+    if (isContentPage) {
+      if (genres?.length) {
+        baseStructured.genre = genres;
+      }
+      if (datePublished) {
+        baseStructured.datePublished = datePublished;
+      }
+      if (contentRating) {
+        baseStructured.contentRating = contentRating;
+      }
+      if (aggregateRating && aggregateRating.ratingValue > 0) {
+        baseStructured.aggregateRating = {
+          '@type': 'AggregateRating',
+          ratingValue: Number(aggregateRating.ratingValue.toFixed(1)),
+          bestRating: aggregateRating.bestRating,
+          worstRating: aggregateRating.worstRating,
+        };
+      }
+      if (duration) {
+        baseStructured.duration = duration;
+      }
       baseStructured.potentialAction = {
         '@type': 'WatchAction',
         target: {
@@ -108,7 +143,7 @@ export default function SEOHead({
       };
     }
 
-    if (!movieTitle) {
+    if (!isContentPage) {
       baseStructured.potentialAction = {
         '@type': 'SearchAction',
         target: {
@@ -146,7 +181,7 @@ export default function SEOHead({
     return () => {
       removeMetaTag('movie-night-seo');
     };
-  }, [title, description, keywords, image, url, type, movieTitle, movieDescription]);
+  }, [title, description, keywords, image, url, type, movieTitle, movieDescription, movieImage, isSeries, genres, datePublished, contentRating, aggregateRating, duration]);
 
   return null;
 }
