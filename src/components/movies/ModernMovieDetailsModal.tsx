@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Check,
   Clock,
+  Download,
   Heart,
   LoaderCircle,
   Play,
@@ -592,6 +593,17 @@ export default function ModernMovieDetailsModal({
                         Share
                       </span>
                     </button>
+                    <a
+                      href="https://www.profitableratecpmnetwork.com/tw1an81k?key=f2b7057963c9e6909f8cb7ddc52b51ed"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="min-h-11 rounded-xl border border-white/20 bg-white/10 px-3 py-3 text-sm text-white transition-colors hover:bg-white/20 sm:px-4 sm:text-base"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Download
+                      </span>
+                    </a>
                     </div>
                   </div>
                 </div>

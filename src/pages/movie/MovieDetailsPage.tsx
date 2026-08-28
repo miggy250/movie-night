@@ -8,6 +8,7 @@ import {
   Clock, 
   Film,
   Share2,
+  Download,
   ArrowLeft,
   Plus,
   ThumbsUp,
@@ -210,6 +211,16 @@ export default function MovieDetailsPage({ movie, onClose }: MovieDetailsPagePro
             <Share2 className="w-5 h-5" />
             Share
           </button>
+          
+          <a
+            href="https://www.profitableratecpmnetwork.com/tw1an81k?key=f2b7057963c9e6909f8cb7ddc52b51ed"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all"
+          >
+            <Download className="w-5 h-5" />
+            Download
+          </a>
         </div>
 
         {/* Overview */}

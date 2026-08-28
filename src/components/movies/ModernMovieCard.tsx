@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Clock, Film, Heart, Play, Sparkles, Star, Tv2 } from 'lucide-react';
+import { Clock, Download, Film, Heart, Play, Sparkles, Star, Tv2 } from 'lucide-react';
 import Badge from '../common/Badge';
 import {
   getContentTitle,
@@ -378,6 +378,18 @@ export default function ModernMovieCard({
                       {inQueue ? 'Queued' : 'Queue'}
                     </span>
                   </button>
+                  <a
+                    href="https://www.profitableratecpmnetwork.com/tw1an81k?key=f2b7057963c9e6909f8cb7ddc52b51ed"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    className="rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white transition-colors hover:bg-white/10"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      Download
+                    </span>
+                  </a>
                 </div>
               </div>
             </motion.div>,
